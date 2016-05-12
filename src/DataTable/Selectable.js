@@ -11,17 +11,27 @@ const propTypes = {
         props[propName] && new Error(`${componentName}: \`${propName}\` is deprecated, please use \`rows\` instead. \`${propName}\` will be removed in the next major release.`)
     ),
     onSelectionChanged: PropTypes.func,
+    onRowSelected: PropTypes.func,
+    onRowDeselected: PropTypes.func,
     rowKeyColumn: PropTypes.string,
     rows: PropTypes.arrayOf(
         PropTypes.object
     ).isRequired,
+    selectedRows: PropTypes.array,
     selectable: PropTypes.bool
 };
 
 const defaultProps = {
     onSelectionChanged: () => {
         // do nothing
-    }
+    },
+    onRowSelected: () => {
+        // do nothing
+    },
+    onRowDeselected: () => {
+        // do nothing
+    },
+    selectedRows: []
 };
 
 export default Component => {
@@ -36,66 +46,51 @@ export default Component => {
             if (props.selectable) {
                 this.state = {
                     headerSelected: false,
-                    selectedRows: []
+                    selectedRows: [].concat(props.selectedRows)
                 };
             }
         }
 
         componentWillReceiveProps(nextProps) {
             if (nextProps.selectable) {
-                const { rows, data, rowKeyColumn } = nextProps;
+                const { rows, data, selectedRows } = nextProps;
                 const rrows = rows || data;
-
-                // keep only existing rows
-                const selectedRows = this.state.selectedRows
-                    .filter(k => rrows
-                        .map((row, i) => row[rowKeyColumn] || row.key || i)
-                        .indexOf(k) > -1
-                    );
 
                 this.setState({
                     headerSelected: selectedRows.length === rrows.length,
                     selectedRows
                 });
-
-                nextProps.onSelectionChanged(selectedRows);
             }
         }
 
         handleChangeHeaderCheckbox(e) {
-            const { rowKeyColumn, rows, data } = this.props;
+            const { rowKeyColumn, rows, data, selectedRows } = this.props;
             const selected = e.target.checked;
-            const selectedRows = selected
+            const newSelection = selected
                 ? (rows || data).map((row, idx) => row[rowKeyColumn] || row.key || idx)
                 : [];
 
-            this.setState({
-                headerSelected: selected,
-                selectedRows
-            });
-
-            this.props.onSelectionChanged(selectedRows);
+            if (newSelection.length === 0) {
+                selectedRows.map(this.props.onRowDeselected)
+            } else {
+                selectedRows.map(this.props.onRowSelected)
+            }
+           this.props.onSelectionChanged(newSelection);
         }
 
         handleChangeRowCheckbox(e) {
-            const { rows, data } = this.props;
             const rowId = JSON.parse(e.target.dataset.reactmdl).id;
             const rowChecked = e.target.checked;
             const selectedRows = this.state.selectedRows;
 
             if (rowChecked) {
-                selectedRows.push(rowId);
+                this.props.onRowSelected(rowId)
+                this.props.onSelectionChanged(selectedRows.concat(rowId));
             } else {
+                this.props.onRowDeselected(rowId)
                 const idx = selectedRows.indexOf(rowId);
-                selectedRows.splice(idx, 1);
+                this.props.onSelectionChanged(selectedRows.slice(idx, 1));
             }
-
-            this.setState({
-                headerSelected: (rows || data).length === selectedRows.length,
-                selectedRows
-            });
-
-            this.props.onSelectionChanged(selectedRows);
         }
 
         builRowCheckbox(content, row, idx) {
@@ -103,6 +98,7 @@ export default Component => {
             const isSelected = this.state.selectedRows.indexOf(rowKey) > -1;
             return (
                 <Checkbox
+                    onClick={(e) => e.stopPropagation()}
                     className="mdl-data-table__select"
                     data-reactmdl={JSON.stringify({ id: rowKey })}
                     checked={isSelected}
@@ -127,7 +123,7 @@ export default Component => {
                 : (rows || data);
 
             return (
-                <Component rows={realRows} {...otherProps}>
+                <Component rows={realRows} {...otherProps} rowKeyColumn={rowKeyColumn}>
                     {selectable && (
                         <TableHeader name="mdl-header-select" cellFormatter={this.builRowCheckbox}>
                             <Checkbox className="mdl-data-table__select" checked={this.state.headerSelected} onChange={this.handleChangeHeaderCheckbox} />

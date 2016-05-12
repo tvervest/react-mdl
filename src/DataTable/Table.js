@@ -18,7 +18,14 @@ const propTypes = {
     rows: PropTypes.arrayOf(
         PropTypes.object
     ).isRequired,
-    shadow: PropTypes.number
+    shadow: PropTypes.number,
+    onRowClicked: PropTypes.func
+};
+
+const defaultProps = {
+    onRowClicked: () => {
+        // do nothing
+    }
 };
 
 class Table extends React.Component {
@@ -56,6 +63,7 @@ class Table extends React.Component {
                     {column.label}
                 </TableHeader>
             );
+
         return (
             <table className={classes} {...otherProps}>
                 <thead>
@@ -64,11 +72,14 @@ class Table extends React.Component {
                     </tr>
                 </thead>
                 <tbody>
-                    {realRows.map((row, idx) =>
-                        <tr key={row[rowKeyColumn] || row.key || idx} className={row.className}>
-                            {columnChildren.map((child) => this.renderCell(child.props, row, idx))}
-                        </tr>
-                    )}
+                    {realRows.map((row, idx) => {
+                        const key = row[rowKeyColumn] || row.key || idx
+                        return (
+                            <tr key={key} className={row.className} onClick={() => this.props.onRowClicked(key)}>
+                                {columnChildren.map((child) => this.renderCell(child.props, row, idx))}
+                            </tr>
+                        )
+                    })}
                 </tbody>
             </table>
         );
@@ -76,6 +87,7 @@ class Table extends React.Component {
 }
 
 Table.propTypes = propTypes;
+Table.defaultProps = defaultProps;
 
 export default makeSortable(makeSelectable(Table));
 export const UndecoratedTable = Table;
