@@ -67,6 +67,14 @@ class Table extends React.Component {
                 </TableHeader>
             );
 
+        const makeOnClickHandler = (key) =>
+            (e) => {
+                // ugly hack to prevent the callback from firing when a checkbox in the row is clicked
+                if (!e.target.className || e.target.className.indexOf('checkbox') === -1) {
+                    this.props.onRowClicked(key)
+                }
+            }
+
         return (
             <table className={classes} {...otherProps}>
                 <thead>
@@ -78,7 +86,7 @@ class Table extends React.Component {
                     {realRows.map((row, idx) => {
                         const key = row[rowKeyColumn] || row.key || idx
                         return (
-                            <tr key={key} className={row.className} onClick={() => this.props.onRowClicked(key)}>
+                            <tr key={key} className={row.className} onClick={makeOnClickHandler(key)}>
                                 {columnChildren.map((child) => this.renderCell(child.props, row, idx))}
                             </tr>
                         )

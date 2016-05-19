@@ -75,30 +75,38 @@ export default Component => {
             } else {
                 selectedRows.map(this.props.onRowSelected)
             }
-           this.props.onSelectionChanged(newSelection);
+
+            this.props.onSelectionChanged(newSelection);
         }
 
         handleChangeRowCheckbox(e) {
-            const rowId = JSON.parse(e.target.dataset.reactmdl).id;
-            const rowChecked = e.target.checked;
-            const selectedRows = this.state.selectedRows;
+            e.stopPropagation()
 
-            if (rowChecked) {
+            const rowId = JSON.parse(e.target.dataset.reactmdl).id;
+            const selectedRows = this.state.selectedRows;
+            const idx = selectedRows.indexOf(rowId);
+
+            if (idx === -1) {
                 this.props.onRowSelected(rowId)
                 this.props.onSelectionChanged(selectedRows.concat(rowId));
             } else {
                 this.props.onRowDeselected(rowId)
-                const idx = selectedRows.indexOf(rowId);
-                this.props.onSelectionChanged(selectedRows.slice(idx, 1));
+                this.props.onSelectionChanged([
+                    ...selectedRows.slice(0, idx),
+                    ...selectedRows.slice(idx + 1)
+                ]);
             }
         }
 
         builRowCheckbox(content, row, idx) {
             const rowKey = row[this.props.rowKeyColumn] || row.key || idx;
             const isSelected = this.state.selectedRows.indexOf(rowKey) > -1;
+            const onClick = (e) =>
+                e.stopPropagation()
+
             return (
                 <Checkbox
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={onClick}
                     className="mdl-data-table__select"
                     data-reactmdl={JSON.stringify({ id: rowKey })}
                     checked={isSelected}
