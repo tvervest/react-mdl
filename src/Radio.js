@@ -13,7 +13,7 @@ const propTypes = {
     value: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.number
-    ]).isRequired
+    ])
 };
 
 class Radio extends React.Component {
