@@ -30,7 +30,10 @@ const defaultProps = {
 
 class Table extends React.Component {
     renderCell(column, row, idx) {
-        const className = !column.numeric ? 'mdl-data-table__cell--non-numeric' : '';
+        const className = classNames({
+            'mdl-data-table__cell--non-numeric': !column.numeric,
+            ...column.cellClasses ? column.cellClasses(row[column.name], row, idx) : null
+        })
         return (
             <td key={column.name} className={className}>
                 {column.cellFormatter ? column.cellFormatter(row[column.name], row, idx) : row[column.name]}
