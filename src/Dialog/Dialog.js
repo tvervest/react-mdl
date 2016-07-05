@@ -50,9 +50,9 @@ class Dialog extends React.Component {
         const classes = classNames('mdl-dialog', className);
 
         return (
-            <dialog ref="dialog" className={classes} {...otherProps}>
+            <div ref="dialog" className={classes} {...otherProps}>
                 {children}
-            </dialog>
+            </div>
         );
     }
 }
